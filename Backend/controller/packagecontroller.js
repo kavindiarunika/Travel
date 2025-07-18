@@ -27,14 +27,17 @@ const addPackage = async (req, res) => {
 
     const subImageUrls = await Promise.all(
       subImages.map(async (img) => {
-        const result = await cloudinary.uploader.upload(img.path, {
-          resource_type: 'image'
-        });
-        return result.secure_url;
+        if (img && img.path) {
+          const result = await cloudinary.uploader.upload(img.path, {
+            resource_type: 'image'
+          });
+          return result.secure_url;
+        }
+        return null;
       })
     );
 
-    const mainImageUrl = mainImage
+    const mainImageUrl = mainImage && mainImage.path
       ? (await cloudinary.uploader.upload(mainImage.path)).secure_url
       : '';
 
@@ -43,7 +46,7 @@ const addPackage = async (req, res) => {
         const file = uploadedFiles.find(
           (file) => file.fieldname === `includes[${index}][image]`
         );
-        const imageUrl = file
+        const imageUrl = file && file.path
           ? (await cloudinary.uploader.upload(file.path)).secure_url
           : '';
         return {
