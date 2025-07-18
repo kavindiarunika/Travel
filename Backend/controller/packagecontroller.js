@@ -15,43 +15,31 @@ const addPackage = async (req, res) => {
       MoreDetail
     } = req.body;
 
-    const uploadedFiles = req.files;
+    const uploadToCloudinary = async (file) => {
+      if (file && file.path) {
+        const result = await cloudinary.uploader.upload(file.path, {
+          resource_type: 'image'
+        });
+        return result.secure_url;
+      }
+      return '';
+    };
 
-    const subImage1 = uploadedFiles.find(file => file.fieldname === 'subImage1');
-    const subImage2 = uploadedFiles.find(file => file.fieldname === 'subImage2');
-    const subImage3 = uploadedFiles.find(file => file.fieldname === 'subImage3');
-    const subImage4 = uploadedFiles.find(file => file.fieldname === 'subImage4');
-    const mainImage = uploadedFiles.find(file => file.fieldname === 'image');
-
-    const subImages = [subImage1, subImage2, subImage3, subImage4].filter(Boolean);
-
+    const mainImageUrl = await uploadToCloudinary(req.files.find(f => f.fieldname === 'image'));
     const subImageUrls = await Promise.all(
-      subImages.map(async (img) => {
-        if (img && img.path) {
-          const result = await cloudinary.uploader.upload(img.path, {
-            resource_type: 'image'
-          });
-          return result.secure_url;
-        }
-        return null;
-      })
+      ['subImage1', 'subImage2', 'subImage3', 'subImage4'].map(fieldname =>
+        uploadToCloudinary(req.files.find(f => f.fieldname === fieldname))
+      )
     );
-
-    const mainImageUrl = mainImage && mainImage.path
-      ? (await cloudinary.uploader.upload(mainImage.path)).secure_url
-      : '';
 
     const includesWithImages = await Promise.all(
       (Array.isArray(includes) ? includes : [includes]).map(async (include, index) => {
-        const file = uploadedFiles.find(
-          (file) => file.fieldname === `includes[${index}][image]`
+        const file = req.files.find(
+          (f) => f.fieldname === `includes[${index}][image]`
         );
-        const imageUrl = file && file.path
-          ? (await cloudinary.uploader.upload(file.path)).secure_url
-          : '';
         return {
           name: include.name,
-          image: imageUrl
+          image: await uploadToCloudinary(file)
         };
       })
     );

@@ -45,13 +45,8 @@ const Add = ({ token }) => {
         formData.append(`includes[${i}][image]`, inc.image);
       });
 
-      visitingPlaces.forEach((place, i) => {
-        formData.append(`visitingPlaces[${i}]`, place);
-      });
-
-      hotel.forEach((h, i) => {
-        formData.append(`hotel[${i}]`, h);
-      });
+      formData.append('visitingPlaces', visitingPlaces.join(','));
+      formData.append('hotel', hotel.join(','));
 
       const response = await axios.post(
         `${backendUrl}/api/package/add`,
