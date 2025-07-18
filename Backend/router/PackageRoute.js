@@ -4,13 +4,7 @@ import upload from '../middleware/multer.js';
 
 const productrouter =express.Router();
 
-productrouter.post('/add',upload.fields([
-  { name: 'subImage1', maxCount: 1 },
-  { name: 'subImage2', maxCount: 1 },
-  { name: 'subImage3', maxCount: 1 },
-  { name: 'subImage4', maxCount: 1 },
-  { name: 'image', maxCount: 1 } 
-]),addPackage)
+productrouter.post('/add',upload.any(),addPackage)
 ;
 productrouter.post('/remove' , removePackage);
 productrouter.post('/single' , singlePackage);

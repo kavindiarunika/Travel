@@ -15,11 +15,13 @@ const addPackage = async (req, res) => {
       MoreDetail
     } = req.body;
 
-    // Access uploaded files (array: image1, image2, image3, image4)
-    const subImage1 = req.files.subImage1 && req.files.subImage1[0];
-    const subImage2 = req.files.subImage2 && req.files.subImage2[0];
-    const subImage3 = req.files.subImage3 && req.files.subImage3[0];
-    const subImage4 = req.files.subImage4 && req.files.subImage4[0];
+    const uploadedFiles = req.files;
+
+    const subImage1 = uploadedFiles.find(file => file.fieldname === 'subImage1');
+    const subImage2 = uploadedFiles.find(file => file.fieldname === 'subImage2');
+    const subImage3 = uploadedFiles.find(file => file.fieldname === 'subImage3');
+    const subImage4 = uploadedFiles.find(file => file.fieldname === 'subImage4');
+    const mainImage = uploadedFiles.find(file => file.fieldname === 'image');
 
     const subImages = [subImage1, subImage2, subImage3, subImage4].filter(Boolean);
 
@@ -32,20 +34,31 @@ const addPackage = async (req, res) => {
       })
     );
 
-    
-    const mainImage = req.files.image && req.files.image[0];
     const mainImageUrl = mainImage
       ? (await cloudinary.uploader.upload(mainImage.path)).secure_url
       : '';
 
-   
+    const includesWithImages = await Promise.all(
+      (Array.isArray(includes) ? includes : [includes]).map(async (include, index) => {
+        const file = uploadedFiles.find(
+          (file) => file.fieldname === `includes[${index}][image]`
+        );
+        const imageUrl = file
+          ? (await cloudinary.uploader.upload(file.path)).secure_url
+          : '';
+        return {
+          name: include.name,
+          image: imageUrl
+        };
+      })
+    );
 
     const newPackage = new packageModel({
       _id,
       name,
       subImage: subImageUrls,
       visitingPlaces: visitingPlaces.split(','),
-      includes,
+      includes: includesWithImages,
       hotel: hotel.split(','),
       price: Number(price),
       duration,
